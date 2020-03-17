@@ -15,7 +15,6 @@ params = {
         }
 matplotlib.rcParams.update(params)
 
-
 def histedges_equalN(x, nbin):
     """
     Generates 1D histogram with equal
@@ -48,10 +47,10 @@ def snr_scatter(param, ax, fig, df):
     return sc
 
 
-def snr_snr_plot(df_gt, df_op, gt_indices, op_indices, params, title = None, save=False):
+def snr_snr_plot(df_gt, df_op, gt_indices, op_indices, params, title = None, save=False, show=True):
     """
-    Generates snr scatter plot for all the parameters 
-    in the input data
+    Generates snr scatter plot for required parameters 
+    in the data
     :param df_gt: dataframe with ground truth info
     :param df_op: dataframe with detected candidate info
     :param gt_indices: Ground truth indexes of candidates 
@@ -91,9 +90,11 @@ def snr_snr_plot(df_gt, df_op, gt_indices, op_indices, params, title = None, sav
     if save:
         figname = title+'_snr_snr_plot' if title else 'snr_snr_plot' 
         plt.savefig(f'{figname}.png', bbox_inches='tight')
+    if show:
+        plt.show()
         
 
-def recall_1d(df_gt, gt_indices, param, recall_bins = 10, hist_bins = 30, title=None, save=False):
+def recall_1d(df_gt, gt_indices, param, recall_bins = 10, hist_bins = 30, title=None, save=False, show=True):
     """
     Generates the 1D recall plot with equal number 
     of examples in each bin, overlayed with the 
@@ -141,8 +142,9 @@ def recall_1d(df_gt, gt_indices, param, recall_bins = 10, hist_bins = 30, title=
     if save:
         figname = title+f'_1d_recall_{param}' if title else f'1d_recall_{param}' 
         plt.savefig(f'{figname}.png', bbox_inches='tight')
-    plt.show()
-
+    if show:
+        plt.show()
+        
     return ax1
 
 
@@ -182,19 +184,27 @@ def manage_input(file):
         
     return df_gt, df_op, gt_indices, op_indices
 
-# if __name__ == '__main__':
-#     parser = argparse.ArgumentParser(description="Generates plots to visualise search software performance",
-#                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-#     parser.add_argument('-f', '--file', help='json file', type=str, required=True)
-#     parser.add_argument('-ss', '--snr_snr_plot', help='Save snr snr plot', action='store_true')
-#     parser.add_argument('-r', '--recall_plot', help='Save 1D recall plot', action='store_true')
-#     inputs = parser.parse_args()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Generates plots to visualise search software performance",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-f', '--file', help='json file(s)', type=str, nargs='+', required=True)
+    parser.add_argument('-ss', '--snr_snr_plot', help='Save snr snr plot', action='store_true')
+    parser.add_argument('-r', '--recall_plot', help='Save 1D recall plot', action='store_true')
+    parser.add_argument('-d', '--display_plots', help='Display plots', action='store_true')
+    parser.add_argument('-p', '--params', help='Parameter for 1D recall plot (dm, width, toa)', type=str, nargs='+', 
+                        default=['dm'])
     
-#     title = os.path.splitext(inputs.file)[0].split('_')[-1]
-#     df_gt_plot, df_op_plot, gt_indices, op_indices = manage_input(inputs.file)
+    inputs = parser.parse_args()
     
-#     if inputs.snr_snr_plot:
-#         snr_snr_plot(df_gt_plot, df_op_plot, gt_indices, op_indices, ['dm', 'width', 'toa'], title = None, save=True)    
-    
-#     if inputs.recall_plot:
-#         recall_1d(df_gt_plot, gt_indices, 'dm', recall_bins = 10, hist_bins = 30, title=title, save=True)
+    for file in inputs.file:
+        title = os.path.splitext(file)[0].split('_')[-1]
+        df_gt_plot, df_op_plot, gt_indices, op_indices = manage_input(file)
+
+        if inputs.snr_snr_plot:
+            snr_snr_plot(df_gt_plot, df_op_plot, gt_indices, op_indices, ['dm', 'width', 'toa'], title = title, 
+                         save=True, show=inputs.display_plots)
+
+        if inputs.recall_plot:
+            for param in inputs.params:
+                recall_1d(df_gt_plot, gt_indices, param, recall_bins = 10, hist_bins = 30, title=title, save=True, 
+                         show=inputs.display_plots)
