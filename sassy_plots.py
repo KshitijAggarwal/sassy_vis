@@ -1,5 +1,5 @@
 import pandas as pd
-import json, argparse, os
+import json, argparse, os, logging
 import pylab as plt
 import numpy as np
 import matplotlib
@@ -14,6 +14,9 @@ params = {
         'figure.figsize': [10, 8]
         }
 matplotlib.rcParams.update(params)
+logging_format = '%(asctime)s - %(funcName)s -%(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=logging_format)
+
 
 def histedges_equalN(x, nbin):
     """
@@ -196,15 +199,22 @@ if __name__ == '__main__':
     
     inputs = parser.parse_args()
     
+    if not inputs.display_plots:
+        logging.info('Not displaying plots.')
+    
     for file in inputs.file:
         title = os.path.splitext(file)[0].split('_')[-1]
+        
+        logging.info(f'Reading and cleaning data from {file} for plotting.')
         df_gt_plot, df_op_plot, gt_indices, op_indices = manage_input(file)
 
         if inputs.snr_snr_plot:
+            logging.info(f'Generating SNR-SNR plot for {title}.')
             snr_snr_plot(df_gt_plot, df_op_plot, gt_indices, op_indices, ['dm', 'width', 'toa'], title = title, 
                          save=True, show=inputs.display_plots)
 
         if inputs.recall_plot:
+            logging.info(f'Generating 1D recall plot for {title}.')
             for param in inputs.params:
                 recall_1d(df_gt_plot, gt_indices, param, recall_bins = 10, hist_bins = 30, title=title, save=True, 
                          show=inputs.display_plots)
